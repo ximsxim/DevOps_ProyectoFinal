@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Plantilla de infraestructura para el proyecto DevOps de Ximena'
+
+Resources:
+  PerfilLab:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      InstanceProfileName: PerfilLabRoleDevOpsX
+      Roles: 
+        - LabRole
+
+  InstanciaApp:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-080e1f13689e07408
+      KeyName: llaves-devops
+      IamInstanceProfile: !Ref PerfilLab
+      Tags:
+        - Key: Name
+          Value: Instancia-WebApp-IaC
+
+  BucketAlmacenamiento:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'bucket-devops-ximena-${AWS::AccountId}'

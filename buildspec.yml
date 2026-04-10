@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - echo "Iniciando fase de pruebas automatizadas..."
+      - echo "Validando sintaxis de YAML..."
+      - docker-compose config
+      - echo "Construyendo imágenes de Docker para validación..."
+      - docker-compose build
+      - echo "Pruebas automatizadas superadas con éxito."
+artifacts:
+  files:
+    - '**/*'

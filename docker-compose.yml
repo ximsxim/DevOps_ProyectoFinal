@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  app_web:
+    build: .
+    ports:
+      - "8080:80"
+    networks:
+      - devops_net
+    volumes:
+      - devops_data:/var/log/nginx
+
+  cache_redis:
+    image: redis:alpine
+    networks:
+      - devops_net
+
+networks:
+  devops_net:
+    driver: bridge
+
+volumes:
+  devops_data:
