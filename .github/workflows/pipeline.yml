@@ -2,29 +2,51 @@ name: DevOps CI-CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
 
 jobs:
-  test_and_deploy:
+  test-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout del código
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: 1. Pruebas Automatizadas (Validar YAML)
-        run: docker-compose config
+      - name: Validar sintaxis de scripts Bash
+        run: |
+          bash -n setup.sh
+          bash -n clean_logs.sh
+          bash -n deploy.sh
 
-      - name: 2. Copiar archivos al Servidor Linux (EC2)
-        uses: appleboy/scp-action@master
+      - name: Validar sintaxis de Python
+        run: python -m py_compile aws_manager.py
+
+      - name: Validar plantilla CloudFormation
+        run: |
+          aws cloudformation validate-template --template-body file://infra.yaml
+        env:
+          AWS_DEFAULT_REGION: us-east-1
+
+      - name: Construir imagenes Docker (test)
+        run: docker-compose build
+
+      - name: Ejecutar contenedores y probar respuesta HTTP
+        run: |
+          docker-compose up -d
+          sleep 5
+          curl --fail http://localhost:8080 || exit 1
+          docker-compose down
+
+      - name: Copiar archivos a EC2 y desplegar
+        uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "."
+          source: ".,!./.git"
           target: "/home/ubuntu/proyecto_docker"
 
-      - name: 3. Construcción, Despliegue y Rollback en EC2
-        uses: appleboy/ssh-action@master
+      - name: Ejecutar despliegue remoto
+        uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
