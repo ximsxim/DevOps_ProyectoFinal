@@ -3,9 +3,11 @@ name: DevOps CI-CD Pipeline
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  test-and-deploy:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -20,13 +22,10 @@ jobs:
       - name: Validar sintaxis de Python
         run: python -m py_compile aws_manager.py
 
-      - name: Validar plantilla CloudFormation
-        run: |
-          aws cloudformation validate-template --template-body file://infra.yaml
-        env:
-          AWS_DEFAULT_REGION: us-east-1
+      - name: Validar sintaxis de docker-compose
+        run: docker-compose config
 
-      - name: Construir imagenes Docker (test)
+      - name: Construir imagenes Docker
         run: docker-compose build
 
       - name: Ejecutar contenedores y probar respuesta HTTP
@@ -35,23 +34,3 @@ jobs:
           sleep 5
           curl --fail http://localhost:8080 || exit 1
           docker-compose down
-
-      - name: Copiar archivos a EC2 y desplegar
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: ".,!./.git"
-          target: "/home/ubuntu/proyecto_docker"
-
-      - name: Ejecutar despliegue remoto
-        uses: appleboy/ssh-action@v0.1.6
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd /home/ubuntu/proyecto_docker
-            chmod +x deploy.sh
-            ./deploy.sh
