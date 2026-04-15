@@ -1,15 +1,21 @@
 #!/bin/bash
+set -e
 echo "Iniciando despliegue de la aplicacion..."
-
-if sudo docker-compose up -d --build; then
-    echo "✅ Despliegue exitoso. La aplicacion esta corriendo."
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+elif docker compose version &> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
 else
-    echo "❌ Fallo el despliegue. Iniciando script de Rollback automatico..."
-    # Detiene contenedores fallidos
-    sudo docker-compose down
-    # Restaura los contenedores a su ultimo estado estable
+    echo "Error: docker-compose no instalado."
+    exit 1
+fi
+if $DOCKER_COMPOSE up -d --build; then
+    echo "Despliegue exitoso."
+else
+    echo "Fallo el despliegue. Iniciando rollback..."
+    $DOCKER_COMPOSE down
     echo "Restaurando version anterior..."
-    sudo docker-compose up -d
-    echo "✅ Rollback completado exitosamente."
+    $DOCKER_COMPOSE up -d
+    echo "Rollback completado."
     exit 1
 fi
