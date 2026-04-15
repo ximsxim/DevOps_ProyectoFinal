@@ -23,14 +23,14 @@ jobs:
         run: python -m py_compile aws_manager.py
 
       - name: Validar sintaxis de docker-compose
-        run: docker-compose config
+        run: docker compose config
 
       - name: Construir imagenes Docker
-        run: docker-compose build
+        run: docker compose build
 
       - name: Ejecutar contenedores y probar respuesta HTTP
         run: |
-          docker-compose up -d
+          docker compose up -d
           sleep 5
           curl --fail http://localhost:8080 || exit 1
-          docker-compose down
+          docker compose down
