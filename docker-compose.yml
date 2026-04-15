@@ -9,11 +9,18 @@ services:
       - devops_net
     volumes:
       - devops_data:/var/log/nginx
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
 
   cache_redis:
     image: redis:alpine
     networks:
       - devops_net
+    restart: unless-stopped
 
 networks:
   devops_net:
