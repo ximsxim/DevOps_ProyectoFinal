@@ -1,6 +1,0 @@
-FROM alpine AS builder
-WORKDIR /app
-RUN echo "<h1>Hola Ximena - Despliegue de Contenedores Exitoso</h1>" > index.html
-
-FROM nginx:alpine
-COPY --from=builder /app/index.html /usr/share/nginx/html/index.html
